@@ -13,11 +13,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: npm ci
       - run: npm test
       - name: Package add-on
         run: |
           zip -r takeaway-ff-plugin.zip . \
-            -x 'test/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
+            -x 'test/*' 'node_modules/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
       - uses: actions/upload-artifact@v4
         with:
           name: takeaway-ff-plugin
