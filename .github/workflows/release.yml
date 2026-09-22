@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4.7.0
+        with:
+          versionSpec: 6.x
+
+      - name: GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4.7.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - name: Patch manifest version
+        env:
+          VERSION: ${{ steps.gitversion.outputs.semVer }}
+        run: |
+          python3 -c "
+          import json, os
+          version = os.environ['VERSION'].split('-')[0].split('+')[0]
+          with open('manifest.json') as f:
+              manifest = json.load(f)
+          manifest['version'] = version
+          with open('manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+              f.write('\n')
+          print('manifest version:', version)
+          "
+
+      - run: npm test
+
+      - name: Build unsigned zip
+        run: |
+          mkdir -p dist
+          zip -r dist/bezorgfilters-${{ steps.gitversion.outputs.semVer }}.zip . \
+            -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
+               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
+
+      - name: Sign with AMO
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          rm -rf sign-src && mkdir sign-src
+          unzip -q dist/bezorgfilters-${{ steps.gitversion.outputs.semVer }}.zip -d sign-src
+          npx --yes web-ext sign \
+            --source-dir sign-src \
+            --channel unlisted \
+            --artifacts-dir dist \
+            --verbose
+
+      - name: Attach xpi to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.gitversion.outputs.semVer }}
+        run: |
+          XPI=$(ls dist/*.xpi | head -n1)
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "v$VERSION" "$XPI" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "v$VERSION" "$XPI" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "BezorgFilters v$VERSION" \
+              --generate-notes
+          fi

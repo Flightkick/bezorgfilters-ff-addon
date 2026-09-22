@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="tbz-popup-header">
+    <span class="tbz-logo" aria-hidden="true"></span>
+    <h1>BezorgFilters</h1>
+  </header>
+
+  <label class="row switch">
+    <input type="checkbox" id="enabled">
+    <span>Filtering actief</span>
+  </label>
+
+  <div class="field">
+    <label class="label" for="deliveryFeeMax">Bezorgkosten (€), max</label>
+    <input type="number" id="deliveryFeeMax" min="0" step="0.5" placeholder="0 = gratis">
+  </div>
+
+  <div class="field">
+    <label class="label" for="minOrderMax">Min. bestelling (€), max</label>
+    <input type="number" id="minOrderMax" min="0" step="0.5" placeholder="max">
+  </div>
+
+  <label class="row switch">
+    <input type="checkbox" id="showPanel">
+    <span>Filterpaneel op de pagina tonen</span>
+  </label>
+
+  <div class="actions">
+    <button type="button" id="reset">Standaardwaarden</button>
+  </div>
+
+  <p class="status" id="status"></p>
+
+  <script src="lib/filters.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
