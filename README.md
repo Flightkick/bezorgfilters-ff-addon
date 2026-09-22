@@ -23,7 +23,10 @@ across sessions.
 
 > **Note on selectors:** Thuisbezorgd's frontend changes frequently. The card/fee
 > selectors are defined at the top of `content.js` and are intentionally kept in one
-> place so they are easy to update when the site changes.
+> place so they are easy to update when the site changes. The current selectors are
+> based on the site's `data-qa` attributes (`restaurant-card`,
+> `restaurant-delivery-fee`, `restaurant-mov`, `restaurant-info-name`) and are
+> verified by the DOM integration test against a captured listing page fixture.
 
 ## Project layout
 
@@ -51,7 +54,10 @@ No build step and no dependencies. Load the add-on directly:
 npm test
 ```
 
-Runs the unit tests for price parsing and filter matching plus a manifest/asset check.
+Runs the unit tests for price parsing and filter matching, a jsdom-based DOM
+integration test (extraction + hide/dim behavior against a captured listing-page
+fixture), and a manifest/asset check. Requires `npm install` once (dev dependency:
+jsdom).
 
 ### Packaging
 
@@ -69,5 +75,5 @@ CI (GitHub Actions) runs the tests and uploads a build artifact on every push.
 - Only `www.thuisbezorgd.nl` is targeted (matches in `manifest.json`).
 - Delivery fee and minimum order values are read from what the site renders; if the
   site changes its markup, selectors in `content.js` need updating.
-- Filter behavior depends on visible card data only — it does not call Thuisbezorgd
-  APIs.
+- "Free delivery available" tags are treated as free delivery (fee 0).
+- Cards with unreadable/missing fees are shown by default rather than hidden.

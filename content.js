@@ -1,9 +1,12 @@
 'use strict';
 
-const LISTING_URL_PATTERN =
-  /^https:\/\/www\.thuisbezorgd\.nl\/(bestellen|order)\//;
+const CARD_SELECTOR = '[data-qa="restaurant-card"], [data-testid^="restaurant-item"]';
 
-const CARD_SELECTOR = '[data-testid^="restaurant-item"], [data-testtoken^="restaurant-item"]';
+const NAME_SELECTOR = '[data-qa="restaurant-info-name"], [data-testid="restaurant-name"], h2, h3';
+
+const FEE_SELECTOR = '[data-qa="restaurant-delivery-fee"], [data-testid*="delivery-fee"]';
+
+const MOV_SELECTOR = '[data-qa="restaurant-mov"], [data-testid*="minimum-order"]';
 
 const FREE_DELIVERY_TEXT_RE = /(gratis|free)\s+(bezorg|delivery)/i;
 
@@ -15,20 +18,14 @@ function extractCardData(el) {
     freeDelivery: false
   };
 
-  const nameEl = el.querySelector('[data-testid="restaurant-name"], h2, h3');
+  const nameEl = el.querySelector(NAME_SELECTOR);
   if (nameEl) card.name = nameEl.textContent.trim();
 
   const feeTexts = [];
-  const feeEls = el.querySelectorAll(
-    '[data-testid*="delivery-fee"], [data-testtoken*="delivery-fee"], [class*="delivery-fee"]'
-  );
-  feeEls.forEach((n) => feeTexts.push(n.textContent));
+  el.querySelectorAll(FEE_SELECTOR).forEach((n) => feeTexts.push(n.textContent));
 
   const minTexts = [];
-  const minEls = el.querySelectorAll(
-    '[data-testid*="minimum-order"], [data-testtoken*="minimum-order"], [class*="minimum-order"]'
-  );
-  minEls.forEach((n) => minTexts.push(n.textContent));
+  el.querySelectorAll(MOV_SELECTOR).forEach((n) => minTexts.push(n.textContent));
 
   for (const text of feeTexts) {
     if (FREE_DELIVERY_TEXT_RE.test(text)) {
@@ -73,9 +70,7 @@ function scheduleScan() {
 }
 
 function scan() {
-  if (LISTING_URL_PATTERN.test(location.href)) {
-    ensurePanel();
-  }
+  ensurePanel();
   const cards = Array.from(document.querySelectorAll(CARD_SELECTOR));
   applyFilters(cards);
 }
@@ -87,12 +82,13 @@ function applyFilters(cards) {
   for (const el of cards) {
     const card = extractCardData(el);
     const show = TBZ.matchesFilters(card, state.settings);
+    const targets = filterTargets(el);
     if (show) {
-      el.classList.remove('tbz-hidden', 'tbz-dimmed');
+      for (const t of targets) t.classList.remove('tbz-hidden', 'tbz-dimmed');
       el.removeAttribute('data-tbz-filtered');
       visible++;
     } else {
-      el.classList.add(hideMode ? 'tbz-hidden' : 'tbz-dimmed');
+      for (const t of targets) t.classList.add(hideMode ? 'tbz-hidden' : 'tbz-dimmed');
       el.setAttribute('data-tbz-filtered', '1');
     }
   }
@@ -100,6 +96,19 @@ function applyFilters(cards) {
   state.counts.total = cards.length;
   state.counts.visible = visible;
   updateCounts();
+}
+
+function filterTargets(el) {
+  const targets = [el];
+  const parent = el.parentElement;
+  if (
+    parent &&
+    !parent.matches('main, body') &&
+    parent.querySelectorAll(CARD_SELECTOR).length <= 1
+  ) {
+    targets.push(parent);
+  }
+  return targets;
 }
 
 function updateCounts() {
@@ -111,7 +120,7 @@ function updateCounts() {
 
 function ensurePanel() {
   if (panelEl || !state.settings.showPanel) return;
-  if (!LISTING_URL_PATTERN.test(location.href)) return;
+  if (!document.querySelector(CARD_SELECTOR)) return;
 
   const target = document.querySelector('main') || document.body;
   if (!target) return;

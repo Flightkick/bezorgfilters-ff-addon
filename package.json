@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "Firefox add-on that adds price-range filters (delivery fee, minimum order) to Thuisbezorgd.nl.",
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  },
   "scripts": {
-    "test": "node test/filters.test.js && node test/manifest.test.js"
+    "test": "node test/filters.test.js && node test/content.dom.test.js && node test/manifest.test.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
   }
 }
