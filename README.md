@@ -78,6 +78,23 @@ npx web-ext build
 
 CI (GitHub Actions) runs the tests and uploads a build artifact on every push.
 
+### Releases
+
+On every push/merge to `main`, the **Release** workflow:
+
+1. Computes the version with [GitVersion](https://gitversion.net) (`GitVersion.yml`,
+   starting from `0.1.0`),
+2. Patches `manifest.json` with that version,
+3. Runs the tests, builds the zip, and signs it as an **unlisted** add-on via
+   `web-ext sign` (AMO),
+4. Attaches the signed `.xpi` to a GitHub release (`v<version>`).
+
+This requires two repository secrets: `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`
+(your AMO API credentials). Install the signed `.xpi` from the release page via
+*Install Add-on From File*, or link users to the release asset directly —
+self-distributed add-ons do not auto-update unless an `update_url` is added
+to the manifest.
+
 ## Limitations
 
 - Only `www.thuisbezorgd.nl` is targeted (matches in `manifest.json`).
