@@ -97,34 +97,33 @@ function run() {
   };
 
   tbz.applyFilters(Array.from(document.querySelectorAll(CARD_SELECTOR)));
-  assert.strictEqual(document.querySelectorAll('.tbz-hidden').length, 0, 'no filters set: nothing hidden');
+  assert.strictEqual(document.querySelectorAll('.tbz-dimmed').length, 0, 'no filters set: nothing dimmed');
 
   tbz.state.settings = TBZ.normalizeSettings({ deliveryFeeMax: 3, enabled: true });
   const els = apply();
-  const hiddenNames = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
+  const dimmedNames = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
     .map((el) => el.querySelector('[data-qa="restaurant-info-name"]').textContent);
-  assert.deepStrictEqual(hiddenNames, ['Fat Phills Leiden', "Meryem's"], 'fee > 3 hidden');
+  assert.deepStrictEqual(dimmedNames, ['Fat Phills Leiden', "Meryem's"], 'fee > 3 dimmed');
   for (const el of els) {
-    const wrap = el.parentElement;
     if (el.hasAttribute('data-tbz-filtered')) {
-      assert.ok(el.classList.contains('tbz-hidden'), 'card hidden');
-      assert.ok(wrap.classList.contains('tbz-hidden'), 'grid wrapper hidden too');
+      assert.ok(el.classList.contains('tbz-dimmed'), 'card dimmed');
+      assert.ok(!el.classList.contains('tbz-hidden'), 'never hidden');
     } else {
-      assert.ok(!el.classList.contains('tbz-hidden'), 'card visible');
+      assert.ok(!el.classList.contains('tbz-dimmed'), 'card not dimmed');
     }
   }
 
   tbz.state.settings = TBZ.normalizeSettings({ freeDeliveryOnly: true });
   apply();
-  const freeHidden = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
+  const freeDimmed = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
     .map((el) => el.querySelector('[data-qa="restaurant-info-name"]').textContent);
-  assert.strictEqual(freeHidden.length, 3, 'non-free-delivery hidden');
+  assert.strictEqual(freeDimmed.length, 3, 'non-free-delivery dimmed');
 
   tbz.state.settings = TBZ.normalizeSettings({ minOrderMax: 20 });
   apply();
-  const minHidden = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
+  const minDimmed = Array.from(document.querySelectorAll('[data-tbz-filtered]'))
     .map((el) => el.querySelector('[data-qa="restaurant-info-name"]').textContent);
-  assert.deepStrictEqual(minHidden, ['Papito', 'Fat Phills Leiden', "Meryem's"], 'min order > 20 hidden');
+  assert.deepStrictEqual(minDimmed, ['Papito', 'Fat Phills Leiden', "Meryem's"], 'min order > 20 dimmed');
 
   console.log('DOM integration tests passed.');
 }

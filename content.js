@@ -76,19 +76,17 @@ function scan() {
 }
 
 function applyFilters(cards) {
-  const hideMode = state.settings.mode === 'hide';
   let visible = 0;
 
   for (const el of cards) {
     const card = extractCardData(el);
     const show = TBZ.matchesFilters(card, state.settings);
-    const targets = filterTargets(el);
     if (show) {
-      for (const t of targets) t.classList.remove('tbz-hidden', 'tbz-dimmed');
+      el.classList.remove('tbz-dimmed');
       el.removeAttribute('data-tbz-filtered');
       visible++;
     } else {
-      for (const t of targets) t.classList.add(hideMode ? 'tbz-hidden' : 'tbz-dimmed');
+      el.classList.add('tbz-dimmed');
       el.setAttribute('data-tbz-filtered', '1');
     }
   }
@@ -96,19 +94,6 @@ function applyFilters(cards) {
   state.counts.total = cards.length;
   state.counts.visible = visible;
   updateCounts();
-}
-
-function filterTargets(el) {
-  const targets = [el];
-  const parent = el.parentElement;
-  if (
-    parent &&
-    !parent.matches('main, body') &&
-    parent.querySelectorAll(CARD_SELECTOR).length <= 1
-  ) {
-    targets.push(parent);
-  }
-  return targets;
 }
 
 function updateCounts() {
@@ -137,18 +122,12 @@ function ensurePanel() {
     '  <label class="tbz-row"><input type="checkbox" id="tbz-enabled"> Filtering actief</label>',
     '  <label class="tbz-row"><input type="checkbox" id="tbz-free"> Alleen gratis bezorging</label>',
     '  <div class="tbz-row tbz-range">',
-    '    <span class="tbz-label">Bezorgkosten (€)</span>',
-    '    <input type="number" id="tbz-fee-min" min="0" step="0.5" placeholder="min">',
-    '    <span>–</span>',
+    '    <span class="tbz-label">Bezorgkosten (€), max</span>',
     '    <input type="number" id="tbz-fee-max" min="0" step="0.5" placeholder="max">',
     '  </div>',
     '  <div class="tbz-row tbz-range">',
     '    <span class="tbz-label">Min. bestelling (€), max</span>',
     '    <input type="number" id="tbz-minorder" min="0" step="0.5" placeholder="max">',
-    '  </div>',
-    '  <div class="tbz-row tbz-modes">',
-    '    <label><input type="radio" name="tbz-mode" value="hide"> Verbergen</label>',
-    '    <label><input type="radio" name="tbz-mode" value="dim"> Dimmen</label>',
     '  </div>',
     '</div>'
   ].join('\n');
@@ -162,12 +141,8 @@ function ensurePanel() {
 
   panelEl.querySelector('#tbz-enabled').addEventListener('change', (e) => set('enabled', e.target.checked));
   panelEl.querySelector('#tbz-free').addEventListener('change', (e) => set('freeDeliveryOnly', e.target.checked));
-  panelEl.querySelector('#tbz-fee-min').addEventListener('change', (e) => set('deliveryFeeMin', parseNum(e.target.value)));
   panelEl.querySelector('#tbz-fee-max').addEventListener('change', (e) => set('deliveryFeeMax', parseNum(e.target.value)));
   panelEl.querySelector('#tbz-minorder').addEventListener('change', (e) => set('minOrderMax', parseNum(e.target.value)));
-  panelEl.querySelectorAll('input[name="tbz-mode"]').forEach((r) =>
-    r.addEventListener('change', (e) => set('mode', e.target.value))
-  );
 
   panelEl.querySelector('#tbz-toggle').addEventListener('click', () => {
     const collapsed = panelEl.classList.toggle('tbz-collapsed');
@@ -187,12 +162,8 @@ function syncPanel() {
   const s = state.settings;
   panelEl.querySelector('#tbz-enabled').checked = s.enabled;
   panelEl.querySelector('#tbz-free').checked = s.freeDeliveryOnly;
-  panelEl.querySelector('#tbz-fee-min').value = s.deliveryFeeMin > 0 ? s.deliveryFeeMin : '';
   panelEl.querySelector('#tbz-fee-max').value = s.deliveryFeeMax > 0 ? s.deliveryFeeMax : '';
   panelEl.querySelector('#tbz-minorder').value = s.minOrderMax > 0 ? s.minOrderMax : '';
-  panelEl.querySelectorAll('input[name="tbz-mode"]').forEach((r) => {
-    r.checked = r.value === s.mode;
-  });
   updateCounts();
 }
 

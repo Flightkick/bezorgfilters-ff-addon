@@ -3,7 +3,6 @@
 const fields = [
   { key: 'enabled', el: document.getElementById('enabled'), type: 'checkbox' },
   { key: 'freeDeliveryOnly', el: document.getElementById('freeDeliveryOnly'), type: 'checkbox' },
-  { key: 'deliveryFeeMin', el: document.getElementById('deliveryFeeMin'), type: 'number' },
   { key: 'deliveryFeeMax', el: document.getElementById('deliveryFeeMax'), type: 'number' },
   { key: 'minOrderMax', el: document.getElementById('minOrderMax'), type: 'number' },
   { key: 'showPanel', el: document.getElementById('showPanel'), type: 'checkbox' }
@@ -29,9 +28,6 @@ function render() {
       f.el.value = toInputValue(settings[f.key]);
     }
   }
-  document.querySelectorAll('input[name="mode"]').forEach((r) => {
-    r.checked = r.value === settings.mode;
-  });
   statusEl.textContent = TBZ.settingsSummary(settings);
 }
 
@@ -48,10 +44,6 @@ for (const f of fields) {
     f.el.addEventListener('change', () => persist({ [f.key]: fromInputValue(f.el.value) }));
   }
 }
-
-document.querySelectorAll('input[name="mode"]').forEach((r) =>
-  r.addEventListener('change', () => persist({ mode: r.value }))
-);
 
 document.getElementById('reset').addEventListener('click', () => {
   settings = TBZ.DEFAULT_SETTINGS;

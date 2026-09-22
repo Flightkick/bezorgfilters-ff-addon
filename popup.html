@@ -5,36 +5,32 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>Thuisbezorgd Filters</h1>
+  <header class="tbz-popup-header">
+    <span class="tbz-logo" aria-hidden="true"></span>
+    <h1>Thuisbezorgd Filters</h1>
+  </header>
 
-  <label class="row">
+  <label class="row switch">
     <input type="checkbox" id="enabled">
     <span>Filtering actief</span>
   </label>
 
-  <label class="row">
+  <label class="row switch">
     <input type="checkbox" id="freeDeliveryOnly">
     <span>Alleen gratis bezorging</span>
   </label>
 
-  <div class="row range">
-    <span class="label">Bezorgkosten (€)</span>
-    <input type="number" id="deliveryFeeMin" min="0" step="0.5" placeholder="min">
-    <span>–</span>
+  <div class="field">
+    <label class="label" for="deliveryFeeMax">Bezorgkosten (€), max</label>
     <input type="number" id="deliveryFeeMax" min="0" step="0.5" placeholder="max">
   </div>
 
-  <div class="row range">
-    <span class="label">Min. bestelling (€), max</span>
+  <div class="field">
+    <label class="label" for="minOrderMax">Min. bestelling (€), max</label>
     <input type="number" id="minOrderMax" min="0" step="0.5" placeholder="max">
   </div>
 
-  <div class="row modes">
-    <label><input type="radio" name="mode" value="hide"> Verbergen</label>
-    <label><input type="radio" name="mode" value="dim"> Dimmen</label>
-  </div>
-
-  <label class="row">
+  <label class="row switch">
     <input type="checkbox" id="showPanel">
     <span>Filterpaneel op de pagina tonen</span>
   </label>

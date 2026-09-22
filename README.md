@@ -3,19 +3,20 @@
 A Firefox add-on that enhances [Thuisbezorgd.nl](https://www.thuisbezorgd.nl) by adding
 price-based filters the site itself does not offer:
 
-- **Delivery fee range** (minimum and/or maximum, in euros)
+- **Delivery fee** (maximum, in euros)
 - **Minimum order amount** (maximum, in euros)
 - **Free delivery only** toggle
 
-Non-matching restaurants can be **hidden** or **dimmed**, and the filter state persists
-across sessions.
+Non-matching restaurants are **dimmed** (kept visible but greyed out), and the filter
+state persists across sessions. Dimming keeps the page layout intact, including for
+lazily loaded cards.
 
 ## How it works
 
 - A content script runs on Thuisbezorgd listing pages, observes the DOM with a
   `MutationObserver` (the list is rendered client-side and updates as you scroll/filter),
-  extracts each restaurant card's delivery fee and minimum order amount, and applies the
-  filters by hiding or dimming cards.
+  extracts each restaurant card's delivery fee and minimum order amount, and dims
+  non-matching cards.
 - A collapsible filter panel is injected above the restaurant list for quick access.
 - A toolbar popup offers the same settings and works on any Thuisbezorgd page.
 - Settings are stored via `browser.storage.local` and stay in sync between the panel
