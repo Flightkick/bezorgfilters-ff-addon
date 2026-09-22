@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Thuisbezorgd Filters</h1>
+
+  <label class="row">
+    <input type="checkbox" id="enabled">
+    <span>Filtering actief</span>
+  </label>
+
+  <label class="row">
+    <input type="checkbox" id="freeDeliveryOnly">
+    <span>Alleen gratis bezorging</span>
+  </label>
+
+  <div class="row range">
+    <span class="label">Bezorgkosten (€)</span>
+    <input type="number" id="deliveryFeeMin" min="0" step="0.5" placeholder="min">
+    <span>–</span>
+    <input type="number" id="deliveryFeeMax" min="0" step="0.5" placeholder="max">
+  </div>
+
+  <div class="row range">
+    <span class="label">Min. bestelling (€), max</span>
+    <input type="number" id="minOrderMax" min="0" step="0.5" placeholder="max">
+  </div>
+
+  <div class="row modes">
+    <label><input type="radio" name="mode" value="hide"> Verbergen</label>
+    <label><input type="radio" name="mode" value="dim"> Dimmen</label>
+  </div>
+
+  <label class="row">
+    <input type="checkbox" id="showPanel">
+    <span>Filterpaneel op de pagina tonen</span>
+  </label>
+
+  <div class="actions">
+    <button type="button" id="reset">Standaardwaarden</button>
+  </div>
+
+  <p class="status" id="status"></p>
+
+  <script src="lib/filters.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

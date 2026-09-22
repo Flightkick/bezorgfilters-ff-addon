@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Thuisbezorgd Filters",
+  "version": "0.1.0",
+  "description": "Filter restaurants on Thuisbezorgd.nl by delivery fee and minimum order amount.",
+  "homepage_url": "https://github.com/Flightkick/takeaway-ff-plugin",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.thuisbezorgd.nl/bestellen/*",
+        "*://www.thuisbezorgd.nl/order/*"
+      ],
+      "js": [
+        "lib/filters.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Thuisbezorgd Filters",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "permissions": ["storage"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "takeaway-ff-plugin@flightkick.github",
+      "strict_min_version": "115.0"
+    }
+  }
+}

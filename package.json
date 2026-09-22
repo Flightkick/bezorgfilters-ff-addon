@@ -1,0 +1,12 @@
+{
+  "name": "takeaway-ff-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Firefox add-on that adds price-range filters (delivery fee, minimum order) to Thuisbezorgd.nl.",
+  "scripts": {
+    "test": "node test/filters.test.js && node test/manifest.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

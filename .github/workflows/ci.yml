@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm test
+      - name: Package add-on
+        run: |
+          zip -r takeaway-ff-plugin.zip . \
+            -x 'test/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: takeaway-ff-plugin
+          path: takeaway-ff-plugin.zip
