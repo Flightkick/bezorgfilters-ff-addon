@@ -137,11 +137,12 @@ function run() {
   assert.deepStrictEqual(minDimmed, ['Papito', 'Fat Phills Leiden', "Meryem's"], 'min order > 20 dimmed');
 
   tbz.state.settings = TBZ.normalizeSettings({ showPanel: true });
-  const main = document.querySelector('main');
+  const filterList = document.querySelector('ul[data-qa="filter"]');
   tbz.ensurePanel();
   const panelV1 = document.getElementById('tbz-panel');
   assert.ok(panelV1, 'panel created');
-  assert.ok(main.contains(panelV1), 'panel inside main');
+  assert.strictEqual(panelV1.tagName, 'LI', 'panel rendered as a sidebar list item');
+  assert.ok(filterList.contains(panelV1), 'panel inside the sidebar filter list');
   panelV1.remove();
   assert.strictEqual(document.getElementById('tbz-panel'), null, 'site wiped the panel');
   tbz.scan();
@@ -149,6 +150,16 @@ function run() {
   assert.ok(panelV2, 'panel recreated after being removed');
   assert.notStrictEqual(panelV2, panelV1, 'fresh panel instance');
   assert.strictEqual(panelV2.querySelector('#tbz-fee-max').value, '', 'recreated panel synced from settings');
+
+  tbz.state.settings = TBZ.normalizeSettings({ showPanel: false });
+  tbz.scan();
+  assert.strictEqual(document.getElementById('tbz-panel'), null, 'panel removed live when showPanel is off');
+
+  tbz.state.settings = TBZ.normalizeSettings({ showPanel: true });
+  tbz.scan();
+  const panelV3 = document.getElementById('tbz-panel');
+  assert.ok(panelV3, 'panel re-created live when showPanel is on again');
+  assert.ok(filterList.contains(panelV3), 're-created panel back in the sidebar filter list');
 
   console.log('DOM integration tests passed.');
 }

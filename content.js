@@ -2,6 +2,8 @@
 
 const CARD_SELECTOR = '[data-qa="restaurant-card"], [data-testid^="restaurant-item"]';
 
+const FILTER_LIST_SELECTOR = 'search[data-qa="sidebar"] ul[data-qa="filter"]';
+
 const NAME_SELECTOR = '[data-qa="restaurant-info-name"], [data-testid="restaurant-name"], h2, h3';
 
 const FEE_SELECTOR = '[data-qa="restaurant-delivery-fee"], [data-testid*="delivery-fee"]';
@@ -73,6 +75,10 @@ function scan() {
   if (panelEl && !panelEl.isConnected) {
     panelEl = null;
   }
+  if (panelEl && !state.settings.showPanel) {
+    panelEl.remove();
+    panelEl = null;
+  }
   ensurePanel();
   const cards = Array.from(document.querySelectorAll(CARD_SELECTOR));
   applyFilters(cards);
@@ -110,14 +116,15 @@ function ensurePanel() {
   if (panelEl || !state.settings.showPanel) return;
   if (!document.querySelector(CARD_SELECTOR)) return;
 
-  const target = document.querySelector('main') || document.body;
-  if (!target) return;
-  panelEl = document.createElement('div');
+  const list = document.querySelector(FILTER_LIST_SELECTOR);
+  if (!list) return;
+  panelEl = document.createElement('li');
   panelEl.id = 'tbz-panel';
-  panelEl.className = 'tbz-panel';
-  panelEl.innerHTML = [
+  const box = document.createElement('div');
+  box.className = 'tbz-panel';
+  box.innerHTML = [
     '<div class="tbz-panel-header">',
-    '  <strong class="tbz-title">Thuisbezorgd Filters</strong>',
+    '  <strong class="tbz-title">BezorgFilters</strong>',
     '  <span class="tbz-count" id="tbz-count"></span>',
     '  <button type="button" class="tbz-toggle-btn" id="tbz-toggle" aria-pressed="false" title="In-/uitklappen">▼</button>',
     '</div>',
@@ -133,7 +140,8 @@ function ensurePanel() {
     '  </div>',
     '</div>'
   ].join('\n');
-  target.prepend(panelEl);
+  panelEl.appendChild(box);
+  list.appendChild(panelEl);
 
   const set = (key, value) => {
     state.settings = Object.assign({}, state.settings, { [key]: value });
@@ -145,9 +153,9 @@ function ensurePanel() {
   panelEl.querySelector('#tbz-fee-max').addEventListener('change', (e) => set('deliveryFeeMax', parseNum(e.target.value)));
   panelEl.querySelector('#tbz-minorder').addEventListener('change', (e) => set('minOrderMax', parseNum(e.target.value)));
 
-  panelEl.querySelector('#tbz-toggle').addEventListener('click', () => {
-    const collapsed = panelEl.classList.toggle('tbz-collapsed');
-    panelEl.querySelector('#tbz-toggle').setAttribute('aria-pressed', String(!collapsed));
+  box.querySelector('#tbz-toggle').addEventListener('click', () => {
+    const collapsed = box.classList.toggle('tbz-collapsed');
+    box.querySelector('#tbz-toggle').setAttribute('aria-pressed', String(!collapsed));
   });
 
   syncPanel();

@@ -23,12 +23,12 @@
   }
 }
 
+#tbz-panel {
+  list-style: none;
+  margin: 12px 0 4px;
+}
+
 .tbz-panel {
-  position: sticky;
-  top: 8px;
-  z-index: 9999;
-  margin: 0 auto 16px;
-  max-width: 680px;
   background: var(--tbz-bg);
   border: 1px solid var(--tbz-line);
   border-radius: 12px;
@@ -42,8 +42,8 @@
 .tbz-panel-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 10px 12px;
   cursor: pointer;
   user-select: none;
   background: linear-gradient(135deg, rgba(244, 168, 0, 0.12), rgba(244, 168, 0, 0.03));
@@ -67,8 +67,10 @@
   content: "";
   width: 18px;
   height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #ffd580, var(--tbz-brand-strong));
+  flex: 0 0 auto;
+  border-radius: 4px;
+  background: var(--tbz-brand);
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 55% 65%, 55% 100%, 45% 100%, 45% 65%, 0 30%);
 }
 
 .tbz-count {
@@ -100,10 +102,10 @@
 }
 
 .tbz-panel-body {
-  padding: 14px 16px 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   border-top: 1px solid var(--tbz-line);
 }
 
@@ -155,8 +157,9 @@
 
 .tbz-range {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   padding: 10px 12px;
   background: var(--tbz-bg-soft);
   border: 1px solid var(--tbz-line);
@@ -169,7 +172,7 @@
 }
 
 .tbz-range input[type="number"] {
-  width: 100px;
+  width: 100%;
   padding: 6px 8px;
   border: 1px solid var(--tbz-line);
   border-radius: 8px;

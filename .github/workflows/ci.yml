@@ -18,7 +18,7 @@ jobs:
       - name: Package add-on
         run: |
           zip -r takeaway-ff-plugin.zip . \
-            -x 'test/*' 'node_modules/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
+            -x 'test/*' 'node_modules/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'tools/*'
       - uses: actions/upload-artifact@v7
         with:
           name: takeaway-ff-plugin
