@@ -70,6 +70,9 @@ function scheduleScan() {
 }
 
 function scan() {
+  if (panelEl && !panelEl.isConnected) {
+    panelEl = null;
+  }
   ensurePanel();
   const cards = Array.from(document.querySelectorAll(CARD_SELECTOR));
   applyFilters(cards);
@@ -120,10 +123,9 @@ function ensurePanel() {
     '</div>',
     '<div class="tbz-panel-body">',
     '  <label class="tbz-row"><input type="checkbox" id="tbz-enabled"> Filtering actief</label>',
-    '  <label class="tbz-row"><input type="checkbox" id="tbz-free"> Alleen gratis bezorging</label>',
     '  <div class="tbz-row tbz-range">',
     '    <span class="tbz-label">Bezorgkosten (€), max</span>',
-    '    <input type="number" id="tbz-fee-max" min="0" step="0.5" placeholder="max">',
+    '    <input type="number" id="tbz-fee-max" min="0" step="0.5" placeholder="0 = gratis">',
     '  </div>',
     '  <div class="tbz-row tbz-range">',
     '    <span class="tbz-label">Min. bestelling (€), max</span>',
@@ -140,7 +142,6 @@ function ensurePanel() {
   };
 
   panelEl.querySelector('#tbz-enabled').addEventListener('change', (e) => set('enabled', e.target.checked));
-  panelEl.querySelector('#tbz-free').addEventListener('change', (e) => set('freeDeliveryOnly', e.target.checked));
   panelEl.querySelector('#tbz-fee-max').addEventListener('change', (e) => set('deliveryFeeMax', parseNum(e.target.value)));
   panelEl.querySelector('#tbz-minorder').addEventListener('change', (e) => set('minOrderMax', parseNum(e.target.value)));
 
@@ -154,16 +155,15 @@ function ensurePanel() {
 
 function parseNum(value) {
   const n = parseFloat(value);
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function syncPanel() {
   if (!panelEl) return;
   const s = state.settings;
   panelEl.querySelector('#tbz-enabled').checked = s.enabled;
-  panelEl.querySelector('#tbz-free').checked = s.freeDeliveryOnly;
-  panelEl.querySelector('#tbz-fee-max').value = s.deliveryFeeMax > 0 ? s.deliveryFeeMax : '';
-  panelEl.querySelector('#tbz-minorder').value = s.minOrderMax > 0 ? s.minOrderMax : '';
+  panelEl.querySelector('#tbz-fee-max').value = s.deliveryFeeMax !== null ? s.deliveryFeeMax : '';
+  panelEl.querySelector('#tbz-minorder').value = s.minOrderMax !== null ? s.minOrderMax : '';
   updateCounts();
 }
 

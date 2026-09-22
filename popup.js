@@ -2,7 +2,6 @@
 
 const fields = [
   { key: 'enabled', el: document.getElementById('enabled'), type: 'checkbox' },
-  { key: 'freeDeliveryOnly', el: document.getElementById('freeDeliveryOnly'), type: 'checkbox' },
   { key: 'deliveryFeeMax', el: document.getElementById('deliveryFeeMax'), type: 'number' },
   { key: 'minOrderMax', el: document.getElementById('minOrderMax'), type: 'number' },
   { key: 'showPanel', el: document.getElementById('showPanel'), type: 'checkbox' }
@@ -12,12 +11,13 @@ const statusEl = document.getElementById('status');
 let settings = TBZ.DEFAULT_SETTINGS;
 
 function toInputValue(value) {
-  return value > 0 ? String(value) : '';
+  return value !== null && value !== undefined ? String(value) : '';
 }
 
 function fromInputValue(input) {
+  if (input.trim() === '') return null;
   const n = parseFloat(input);
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function render() {

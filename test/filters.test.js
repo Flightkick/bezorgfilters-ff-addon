@@ -56,17 +56,23 @@ function testNormalizeSettings() {
   const s = TBZ.normalizeSettings(undefined);
   assert.deepStrictEqual(s, {
     enabled: true,
-    freeDeliveryOnly: false,
-    deliveryFeeMax: 0,
-    minOrderMax: 0,
+    deliveryFeeMax: null,
+    minOrderMax: null,
     showPanel: true
   });
 
-  const t = TBZ.normalizeSettings({ deliveryFeeMin: 2, mode: 'dim', extra: true, deliveryFeeMax: -5 });
+  const t = TBZ.normalizeSettings({ extra: true, deliveryFeeMax: -5, deliveryFeeMin: 2, mode: 'dim' });
+  assert.strictEqual(t.deliveryFeeMax, null, 'invalid value -> null');
   assert.strictEqual(t.deliveryFeeMin, undefined, 'deliveryFeeMin removed');
   assert.strictEqual(t.mode, undefined, 'mode removed');
-  assert.strictEqual(t.deliveryFeeMax, 0);
   assert.strictEqual(t.extra, undefined);
+
+  const legacy = TBZ.normalizeSettings({ freeDeliveryOnly: false, deliveryFeeMax: 0, minOrderMax: 15 });
+  assert.strictEqual(legacy.deliveryFeeMax, null, 'legacy 0 fee (unset) migrates to null');
+  assert.strictEqual(legacy.minOrderMax, 15, 'legacy non-zero kept');
+
+  const modern = TBZ.normalizeSettings({ deliveryFeeMax: 0 });
+  assert.strictEqual(modern.deliveryFeeMax, 0, 'modern 0 fee means free only');
 
   const u = TBZ.normalizeSettings(null);
   assert.strictEqual(u.enabled, true);
@@ -81,13 +87,13 @@ function testMatchesFilters() {
   assert.strictEqual(TBZ.matchesFilters(card, { enabled: false, deliveryFeeMax: 1 }), true, 'disabled shows all');
   assert.strictEqual(TBZ.matchesFilters(card, { deliveryFeeMax: 3 }), true);
   assert.strictEqual(TBZ.matchesFilters(card, { deliveryFeeMax: 2 }), false);
-  assert.strictEqual(TBZ.matchesFilters(free, { freeDeliveryOnly: true }), true);
-  assert.strictEqual(TBZ.matchesFilters(card, { freeDeliveryOnly: true }), false);
+  assert.strictEqual(TBZ.matchesFilters(free, { deliveryFeeMax: 0 }), true, 'fee max 0 = free only: free card');
+  assert.strictEqual(TBZ.matchesFilters(card, { deliveryFeeMax: 0 }), false, 'fee max 0 = free only: paid card');
   assert.strictEqual(TBZ.matchesFilters(card, { minOrderMax: 15 }), true);
   assert.strictEqual(TBZ.matchesFilters(card, { minOrderMax: 10 }), false);
   assert.strictEqual(TBZ.matchesFilters(unknown, { deliveryFeeMax: 1 }), true, 'unknown fee passes max filter');
   assert.strictEqual(
-    TBZ.matchesFilters(free, { freeDeliveryOnly: true, minOrderMax: 15 }),
+    TBZ.matchesFilters(free, { deliveryFeeMax: 0, minOrderMax: 15 }),
     true,
     'combined filters'
   );
@@ -101,8 +107,9 @@ function testMatchesFilters() {
 function testSummaryAndActive() {
   assert.strictEqual(TBZ.hasActiveFilters({}), false);
   assert.strictEqual(TBZ.hasActiveFilters({ deliveryFeeMax: 3 }), true);
-  assert.strictEqual(TBZ.hasActiveFilters({ freeDeliveryOnly: true }), true);
+  assert.strictEqual(TBZ.hasActiveFilters({ deliveryFeeMax: 0 }), true);
   assert.strictEqual(TBZ.settingsSummary({}), 'geen filters actief');
+  assert.strictEqual(TBZ.settingsSummary({ deliveryFeeMax: 0 }), 'gratis bezorging');
   assert.ok(TBZ.settingsSummary({ deliveryFeeMax: 3 }).includes('€3,00'));
   assert.strictEqual(TBZ.formatPrice(2.5), '2,50');
 }

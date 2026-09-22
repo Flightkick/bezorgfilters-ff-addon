@@ -3,13 +3,13 @@
 A Firefox add-on that enhances [Thuisbezorgd.nl](https://www.thuisbezorgd.nl) by adding
 price-based filters the site itself does not offer:
 
-- **Delivery fee** (maximum, in euros)
+- **Delivery fee** (maximum, in euros; enter `0` for free delivery only)
 - **Minimum order amount** (maximum, in euros)
-- **Free delivery only** toggle
 
-Non-matching restaurants are **dimmed** (kept visible but greyed out), and the filter
-state persists across sessions. Dimming keeps the page layout intact, including for
-lazily loaded cards.
+An empty field means "no filter". Non-matching restaurants are **dimmed** (kept visible
+but greyed out), and the filter state persists across sessions. Dimming keeps the page
+layout intact, including for lazily loaded cards. The panel and popup follow the site's
+light/dark theme via `prefers-color-scheme`.
 
 ## How it works
 
@@ -78,3 +78,5 @@ CI (GitHub Actions) runs the tests and uploads a build artifact on every push.
   site changes its markup, selectors in `content.js` need updating.
 - "Free delivery available" tags are treated as free delivery (fee 0).
 - Cards with unreadable/missing fees are shown by default rather than hidden.
+- Stored settings from older versions (hide mode, fee minimum, free-delivery toggle) are
+  migrated automatically; a stored `0` fee from those versions is treated as "unset".
