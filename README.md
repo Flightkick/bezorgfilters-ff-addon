@@ -136,11 +136,13 @@ Choosing between the two lanes:
   submitting an existing version fails with `409 Version already exists`.
   When both lanes would derive the same version, pass an explicit `version`
   to one of them.
-- **First listed submission only:** before the store listing exists, the AMO
-  metadata (name, summary, description, category, screenshots) must
-  be created once by hand in the AMO developer dashboard — the license
-  (MIT) is passed automatically with every listed submission. Subsequent
-  submissions update the existing listing automatically.
+- **First listed submission only:** the workflow sends all metadata AMO
+  requires for a new listing — name, summary (both derived from
+  `manifest.json`), categories (`shopping` for Firefox and Android), and the
+  MIT license. Only the store listing content that cannot be set via the
+  API (screenshots, long description) is filled in by hand in the AMO
+  developer dashboard afterwards. Subsequent submissions update the
+  existing listing automatically.
 - After a listed submission the version is *pending review* in the AMO
   dashboard; once approved, AMO hosts and distributes the add-on and no
   `.xpi` needs to be attached to a GitHub release.
