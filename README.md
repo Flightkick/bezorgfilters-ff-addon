@@ -104,6 +104,39 @@ This requires two repository secrets: `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`
 self-distributed add-ons do not auto-update unless an `update_url` is added
 to the manifest.
 
+### Publishing to the AMO store (listed)
+
+A separate manual workflow, **Publish to AMO (listed)**
+(`.github/workflows/publish-amo.yml`), submits the add-on to
+[addons.mozilla.org](https://addons.mozilla.org) as a **listed** add-on. It is
+triggered only by hand from the GitHub Actions tab (*Run workflow*); merging to
+`main` never publishes to the store.
+
+It prompts for a `version` input (strict `major.minor.patch`) and optional
+`approval_notes` for the reviewers, then:
+
+1. Validates the version, patches `manifest.json`, and runs the tests,
+2. Builds and lints the packaged add-on with `web-ext lint` (the same
+   validator AMO runs),
+3. Submits via `web-ext sign --channel listed --approval-timeout 0`, so the
+   run finishes immediately after submission instead of waiting for review.
+
+Notes:
+
+- **Versions are unique per add-on across both channels.** AMO keeps one
+  version namespace per add-on ID, so the `version` you enter must never have
+  been signed before — including by the unlisted Release workflow. Pick a
+  version the unlisted lane has not used (or bump the GitVersion base
+  first). Submitting an existing version fails with `409 Version already
+  exists`.
+- **First listed submission only:** before the store listing exists, the AMO
+  metadata (name, summary, description, category, license, screenshots) must
+  be created once by hand in the AMO developer dashboard. Subsequent
+  submissions update the existing listing automatically.
+- After submission the version is *pending review* in the AMO dashboard; once
+  approved, AMO hosts and distributes the add-on (auto-updates included) and
+  no `.xpi` needs to be attached to a GitHub release.
+
 ## Limitations
 
 - Only `www.thuisbezorgd.nl` is targeted (matches in `manifest.json`).

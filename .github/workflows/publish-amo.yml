@@ -1,0 +1,113 @@
+name: Publish to AMO (listed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Add-on version to publish (strict major.minor.patch, must be unique on AMO)'
+        required: true
+        type: string
+      approval_notes:
+        description: 'Notes for the AMO reviewers (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Validate version input
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          python3 -c "
+          import os, re, sys
+          version = os.environ['VERSION'].strip()
+          if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+              sys.exit(f'Invalid version: {version!r} (expected strict major.minor.patch, e.g. 0.2.0)')
+          "
+
+      - run: npm ci
+
+      - name: Patch manifest version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          python3 -c "
+          import json, os
+          version = os.environ['VERSION'].strip()
+          with open('manifest.json') as f:
+              manifest = json.load(f)
+          manifest['version'] = version
+          with open('manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+              f.write('\n')
+          print('manifest version:', version)
+          "
+
+      - run: npm test
+
+      - name: Build unsigned zip
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          mkdir -p dist
+          zip -r dist/bezorgfilters-${VERSION}.zip . \
+            -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
+               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
+
+      - name: Lint packaged add-on (AMO validator)
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          rm -rf sign-src && mkdir sign-src
+          unzip -q dist/bezorgfilters-${VERSION}.zip -d sign-src
+          npx --yes web-ext lint --source-dir sign-src
+
+      - name: Write AMO metadata
+        env:
+          APPROVAL_NOTES: ${{ inputs.approval_notes }}
+        run: |
+          python3 -c "
+          import json, os
+          notes = os.environ.get('APPROVAL_NOTES', '').strip()
+          metadata = {'version': {}}
+          if notes:
+              metadata['version']['approval_notes'] = notes
+          with open('amo-metadata.json', 'w') as f:
+              json.dump(metadata, f, indent=2)
+          print('amo-metadata.json written')
+          "
+
+      - name: Submit to AMO as listed
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          npx --yes web-ext sign \
+            --source-dir sign-src \
+            --channel listed \
+            --amo-metadata amo-metadata.json \
+            --approval-timeout 0 \
+            --artifacts-dir dist
+
+      - name: Summary
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "## AMO listed submission" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Version \`${VERSION}\` was submitted to addons.mozilla.org (channel: listed)." >> $GITHUB_STEP_SUMMARY
+          echo "The version is now pending review; track its status in the" >> $GITHUB_STEP_SUMMARY
+          echo "AMO developer dashboard. No signed xpi is produced by this flow:" >> $GITHUB_STEP_SUMMARY
+          echo "once approved, AMO hosts and distributes the add-on." >> $GITHUB_STEP_SUMMARY
