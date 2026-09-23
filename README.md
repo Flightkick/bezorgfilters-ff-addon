@@ -83,20 +83,22 @@ npx web-ext build
 
 CI (GitHub Actions) runs the tests and uploads a build artifact on every push.
 
-### Releases
+### Releases (unlisted)
 
-On every push/merge to `main`, the **Release** workflow:
+The **Release (unlisted)** workflow
+(`.github/workflows/release.yml`) signs the add-on as an **unlisted** AMO
+add-on and attaches the signed `.xpi` to a GitHub release. It is triggered
+only by hand from the GitHub Actions tab (*Run workflow*); merging to
+`main` never signs or releases anything.
 
-1. Computes the version with [GitVersion](https://gitversion.net) 6.x
-   (`GitVersion.yml`, base `0.1.1`): each merge to `main` produces a unique
-   monotonic version `<major>.<minor>.<patch>.<distance>` (the commit distance
-   since the version source), so every release signs a fresh AMO version
-   automatically — no manual bumping. Tag a commit (e.g. `v0.2.0`) to reset
-   the base version for that release.
-2. Patches `manifest.json` with that version,
-3. Runs the tests, builds the zip, and signs it as an **unlisted** add-on via
-   `web-ext sign` (AMO),
-4. Attaches the signed `.xpi` to a GitHub release (`v<version>`).
+It takes an optional `version` input (strict `major.minor.patch`); leave it
+empty to derive the version from [GitVersion](https://gitversion.net) 6.x
+(`GitVersion.yml`, base `0.1.1`) the same way CI historically did:
+`<major>.<minor>.<patch + distance>` (commit distance since the version
+source). Tag a commit (e.g. `v0.2.0`) to reset the base version. The workflow
+then patches `manifest.json`, runs the tests, builds the zip, signs it via
+`web-ext sign --channel unlisted`, and attaches the `.xpi` to a GitHub
+release (`v<version>`).
 
 This requires two repository secrets: `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`
 (your AMO API credentials). Install the signed `.xpi` from the release page via
@@ -109,33 +111,36 @@ to the manifest.
 A separate manual workflow, **Publish to AMO (listed)**
 (`.github/workflows/publish-amo.yml`), submits the add-on to
 [addons.mozilla.org](https://addons.mozilla.org) as a **listed** add-on. It is
-triggered only by hand from the GitHub Actions tab (*Run workflow*); merging to
-`main` never publishes to the store.
+also triggered only by hand; merging to `main` never publishes to the store.
 
-It prompts for a `version` input (strict `major.minor.patch`) and optional
-`approval_notes` for the reviewers, then:
+It takes the same optional `version` input (empty = derive from GitVersion)
+and optional `approval_notes` for the reviewers, then:
 
-1. Validates the version, patches `manifest.json`, and runs the tests,
+1. Resolves the version, patches `manifest.json`, and runs the tests,
 2. Builds and lints the packaged add-on with `web-ext lint` (the same
    validator AMO runs),
 3. Submits via `web-ext sign --channel listed --approval-timeout 0`, so the
    run finishes immediately after submission instead of waiting for review.
 
-Notes:
+Choosing between the two lanes:
 
-- **Versions are unique per add-on across both channels.** AMO keeps one
-  version namespace per add-on ID, so the `version` you enter must never have
-  been signed before — including by the unlisted Release workflow. Pick a
-  version the unlisted lane has not used (or bump the GitVersion base
-  first). Submitting an existing version fails with `409 Version already
-  exists`.
+- **Unlisted** gives you a signed `.xpi` you self-distribute (GitHub release,
+  your own site). No review, no store listing, no auto-updates.
+- **Listed** puts the add-on on the AMO store after review: AMO hosts and
+  distributes it (auto-updates included).
+- You can run both lanes for the same code, but **versions are unique per
+  add-on across both channels**: AMO keeps one version namespace per add-on
+  ID, so a version signed by one lane cannot be reused by the other —
+  submitting an existing version fails with `409 Version already exists`.
+  When both lanes would derive the same version, pass an explicit `version`
+  to one of them.
 - **First listed submission only:** before the store listing exists, the AMO
   metadata (name, summary, description, category, license, screenshots) must
   be created once by hand in the AMO developer dashboard. Subsequent
   submissions update the existing listing automatically.
-- After submission the version is *pending review* in the AMO dashboard; once
-  approved, AMO hosts and distributes the add-on (auto-updates included) and
-  no `.xpi` needs to be attached to a GitHub release.
+- After a listed submission the version is *pending review* in the AMO
+  dashboard; once approved, AMO hosts and distributes the add-on and no
+  `.xpi` needs to be attached to a GitHub release.
 
 ## Limitations
 

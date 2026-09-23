@@ -1,8 +1,12 @@
-name: Release
+name: Release (unlisted)
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Add-on version (strict major.minor.patch; leave empty to derive from GitVersion)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -25,26 +29,39 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.7.0
 
-      - name: Compose version
-        id: version
-        env:
-          MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
-          DISTANCE: ${{ steps.gitversion.outputs.versionSourceDistance }}
-        run: |
-          python3 -c "
-          import os
-          mmp = os.environ['MAJOR_MINOR_PATCH'].strip()
-          distance = int(os.environ['DISTANCE'] or '0')
-          major, minor, patch = (int(part) for part in mmp.split('.'))
-          version = f'{major}.{minor}.{patch + distance}'
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-              out.write(f'version={version}\n')
-          print('version:', version)
-          "
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      - name: Compose version
+        id: version
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
+          DISTANCE: ${{ steps.gitversion.outputs.versionSourceDistance }}
+        run: |
+          if [ -n "$VERSION_INPUT" ]; then
+            python3 -c "
+            import os, re, sys
+            version = os.environ['VERSION_INPUT'].strip()
+            if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+                sys.exit(f'Invalid version: {version!r} (expected strict major.minor.patch, e.g. 0.2.0)')
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                out.write(f'version={version}\n')
+            print('version (input):', version)
+            "
+          else
+            python3 -c "
+            import os
+            mmp = os.environ['MAJOR_MINOR_PATCH'].strip()
+            distance = int(os.environ['DISTANCE'] or '0')
+            major, minor, patch = (int(part) for part in mmp.split('.'))
+            version = f'{major}.{minor}.{patch + distance}'
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                out.write(f'version={version}\n')
+            print('version (GitVersion):', version)
+            "
+          fi
 
       - run: npm ci
 
@@ -67,9 +84,11 @@ jobs:
       - run: npm test
 
       - name: Build unsigned zip
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p dist
-          zip -r dist/bezorgfilters-${{ steps.version.outputs.version }}.zip . \
+          zip -r dist/bezorgfilters-${VERSION}.zip . \
             -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
                '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
 
