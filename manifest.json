@@ -3,7 +3,7 @@
   "name": "BezorgFilters",
   "version": "0.1.0",
   "description": "Filter restaurants on thuisbezorgd.nl by delivery fee and minimum order amount, straight from the site's filter sidebar.",
-  "homepage_url": "https://github.com/Flightkick/takeaway-ff-plugin",
+  "homepage_url": "https://github.com/Flightkick/bezorgfilters-ff-addon",
   "icons": {
     "48": "icons/icon-48.png",
     "96": "icons/icon-96.png",

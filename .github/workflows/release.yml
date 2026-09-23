@@ -10,6 +10,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -65,8 +66,7 @@ jobs:
           npx --yes web-ext sign \
             --source-dir sign-src \
             --channel unlisted \
-            --artifacts-dir dist \
-            --verbose
+            --artifacts-dir dist
 
       - name: Attach xpi to GitHub release
         env:

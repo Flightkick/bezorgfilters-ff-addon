@@ -1,5 +1,5 @@
 {
-  "name": "takeaway-ff-plugin",
+  "name": "bezorgfilters-ff-addon",
   "version": "0.1.0",
   "private": true,
   "description": "Firefox add-on that adds price-range filters (delivery fee, minimum order) to thuisbezorgd.nl.",

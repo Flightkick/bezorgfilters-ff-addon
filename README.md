@@ -83,7 +83,8 @@ CI (GitHub Actions) runs the tests and uploads a build artifact on every push.
 On every push/merge to `main`, the **Release** workflow:
 
 1. Computes the version with [GitVersion](https://gitversion.net) (`GitVersion.yml`,
-   starting from `0.1.0`),
+   Mainline mode: each merge to `main` bumps the patch automatically, starting
+   from `0.1.1`),
 2. Patches `manifest.json` with that version,
 3. Runs the tests, builds the zip, and signs it as an **unlisted** add-on via
    `web-ext sign` (AMO),
