@@ -91,7 +91,7 @@ jobs:
         env:
           APPROVAL_NOTES: ${{ inputs.approval_notes }}
         run: |
-          python3 -c "import json, os; notes = os.environ.get('APPROVAL_NOTES', '').strip(); metadata = {'version': {'license': 'EUPL-1.2', **({'approval_notes': notes} if notes else {})}}; json.dump(metadata, open('amo-metadata.json', 'w'), indent=2); print('amo-metadata.json written')"
+          python3 -c "import json, os; notes = os.environ.get('APPROVAL_NOTES', '').strip(); metadata = {'version': {'license': 'MIT', **({'approval_notes': notes} if notes else {})}}; json.dump(metadata, open('amo-metadata.json', 'w'), indent=2); print('amo-metadata.json written')"
 
       - name: Submit to AMO as listed
         env:
