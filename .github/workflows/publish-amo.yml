@@ -13,7 +13,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -132,6 +132,21 @@ jobs:
             --approval-timeout 0 \
             --artifacts-dir dist
 
+      - name: Attach unsigned zip to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ZIP=dist/bezorgfilters-${VERSION}.zip
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "v$VERSION" "$ZIP" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "v$VERSION" "$ZIP" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "BezorgFilters v$VERSION" \
+              --generate-notes
+          fi
+
       - name: Summary
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -140,5 +155,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Version \`${VERSION}\` was submitted to addons.mozilla.org (channel: listed)." >> $GITHUB_STEP_SUMMARY
           echo "The version is now pending review; track its status in the" >> $GITHUB_STEP_SUMMARY
-          echo "AMO developer dashboard. No signed xpi is produced by this flow:" >> $GITHUB_STEP_SUMMARY
-          echo "once approved, AMO hosts and distributes the add-on." >> $GITHUB_STEP_SUMMARY
+          echo "AMO developer dashboard. Once approved, AMO hosts and distributes" >> $GITHUB_STEP_SUMMARY
+          echo "the add-on and serves updates automatically." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The unsigned source zip is attached to the GitHub release" >> $GITHUB_STEP_SUMMARY
+          echo "\`v${VERSION}\` for reference; it is not signed and cannot be" >> $GITHUB_STEP_SUMMARY
+          echo "installed directly. Do not run the unlisted Release workflow for" >> $GITHUB_STEP_SUMMARY
+          echo "the same version: AMO allows a version on only one channel." >> $GITHUB_STEP_SUMMARY

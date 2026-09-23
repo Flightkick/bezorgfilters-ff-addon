@@ -125,7 +125,11 @@ and optional `approval_notes` for the reviewers, then:
 2. Builds and lints the packaged add-on with `web-ext lint` (the same
    validator AMO runs),
 3. Submits via `web-ext sign --channel listed --approval-timeout 0`, so the
-   run finishes immediately after submission instead of waiting for review.
+   run finishes immediately after submission instead of waiting for review,
+4. Attaches the **unsigned source zip** to a GitHub release (`v<version>`)
+   for reference — AMO hosts the actual signed build, so this zip is not
+   installable; it exists so every store submission has a downloadable
+   copy in the repo. The workflow never signs unlisted.
 
 Choosing between the two lanes:
 
@@ -137,8 +141,9 @@ Choosing between the two lanes:
   add-on across both channels**: AMO keeps one version namespace per add-on
   ID, so a version signed by one lane cannot be reused by the other —
   submitting an existing version fails with `409 Version already exists`.
-  When both lanes would derive the same version, pass an explicit `version`
-  to one of them.
+  Never publish the same version on both channels; when both lanes would
+  derive the same version from one commit, pass an explicit `version` to one
+  of them so they stay distinct.
 - **First listed submission only:** the workflow sends all metadata AMO
   requires for a new listing — name, summary (both derived from
   `manifest.json`), categories (`shopping` for Firefox and Android), and the
