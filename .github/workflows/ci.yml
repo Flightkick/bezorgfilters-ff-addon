@@ -18,7 +18,7 @@ jobs:
       - name: Package add-on
         run: |
           zip -r bezorgfilters.zip . \
-            -x 'test/*' 'node_modules/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'tools/*'
+            -x 'test/*' 'node_modules/*' '.git/*' '.gitignore' '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'LICENSE' 'tools/*'
       - uses: actions/upload-artifact@v7
         with:
           name: bezorgfilters
