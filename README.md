@@ -71,6 +71,15 @@ No build step and no runtime dependencies. Load the add-on directly:
 2. Click **Load Temporary Add-on…**
 3. Pick `manifest.json` in this repository
 
+### Automatic version tags
+
+Every push to `main` (i.e. every merge) triggers the **Tag version** workflow
+(`.github/workflows/tag-version.yml`), which computes the same GitVersion-derived
+version as the release lanes and tags the merge commit `v<version>`. The tag
+becomes the new GitVersion version source, so each subsequent merge derives
+exactly one fresh patch version. Tags that point at a different commit are
+never overwritten — a collision fails the run instead.
+
 ### Tests
 
 ```bash
