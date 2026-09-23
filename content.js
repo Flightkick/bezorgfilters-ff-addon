@@ -4,7 +4,7 @@ const CARD_SELECTOR = '[data-qa="restaurant-card"], [data-testid^="restaurant-it
 
 const FILTER_LIST_SELECTOR = 'search[data-qa="sidebar"] ul[data-qa="filter"]';
 
-const MOBILE_SHORTCUTS_SELECTOR = '[data-qa="filter-shortcuts-bar"]';
+const PANEL_ROOT_SELECTOR = '[data-tbz-panel]';
 
 const CUISINE_FILTER_SELECTOR = '[data-qa="cuisine-filter"]';
 
@@ -65,7 +65,7 @@ const state = {
 };
 
 let pendingScan = null;
-let panels = [];
+let panel = null;
 
 function scheduleScan() {
   if (pendingScan) return;
@@ -76,10 +76,8 @@ function scheduleScan() {
 }
 
 function scan() {
-  panels = panels.filter((p) => p.box.isConnected);
   if (!state.settings.showPanel) {
-    for (const p of panels) p.root.remove();
-    panels = [];
+    removeAllPanels();
   } else {
     ensurePanels();
   }
@@ -109,10 +107,9 @@ function applyFilters(cards) {
 }
 
 function updateCounts() {
-  for (const p of panels) {
-    const el = p.box.querySelector('.tbz-count');
-    if (el) el.textContent = state.counts.visible + ' van ' + state.counts.total;
-  }
+  if (!panel) return;
+  const el = panel.box.querySelector('.tbz-count');
+  if (el) el.textContent = state.counts.visible + ' van ' + state.counts.total;
 }
 
 function buildPanelBox() {
@@ -155,42 +152,70 @@ function buildPanelBox() {
   return box;
 }
 
-function ensurePanels() {
-  if (!document.querySelector(CARD_SELECTOR)) return;
-
-  const targets = [];
-  for (const list of document.querySelectorAll(FILTER_LIST_SELECTOR)) {
-    targets.push({ kind: 'list', mount: list });
+function isElementVisible(el) {
+  if (!el || !el.isConnected) return false;
+  if (typeof el.checkVisibility === 'function') {
+    return el.checkVisibility({ checkVisibilityCSS: true });
   }
-  if (document.querySelector(MOBILE_SHORTCUTS_SELECTOR)) {
-    const cuisine = document.querySelector(CUISINE_FILTER_SELECTOR);
-    if (cuisine) targets.push({ kind: 'inline', mount: cuisine });
+  const win = el.ownerDocument.defaultView;
+  let node = el;
+  while (node && node.nodeType === win.Node.ELEMENT_NODE) {
+    if (node.hasAttribute('hidden')) return false;
+    if (win.getComputedStyle(node).display === 'none') return false;
+    node = node.parentElement;
   }
-
-  for (const t of targets) {
-    if (panels.some((p) => p.mount === t.mount)) continue;
-    const root = document.createElement(t.kind === 'list' ? 'li' : 'div');
-    root.className = 'tbz-panel-root';
-    root.dataset.tbzPanel = t.kind;
-    const box = buildPanelBox();
-    if (t.kind === 'inline') box.classList.add('tbz-panel-inline');
-    root.appendChild(box);
-    if (t.kind === 'inline') {
-      t.mount.insertAdjacentElement('afterend', root);
-    } else {
-      t.mount.appendChild(root);
-    }
-    panels.push({ root, box, mount: t.mount, kind: t.kind });
-  }
+  return true;
 }
 
-function syncPanels() {
-  const s = state.settings;
-  for (const p of panels) {
-    p.box.querySelector('.tbz-enabled').checked = s.enabled;
-    p.box.querySelector('.tbz-fee-max').value = s.deliveryFeeMax !== null ? s.deliveryFeeMax : '';
-    p.box.querySelector('.tbz-minorder').value = s.minOrderMax !== null ? s.minOrderMax : '';
+function pickPanelTarget() {
+  for (const list of document.querySelectorAll(FILTER_LIST_SELECTOR)) {
+    if (isElementVisible(list)) return { kind: 'list', mount: list };
   }
+  const cuisine = document.querySelector(CUISINE_FILTER_SELECTOR);
+  if (cuisine && isElementVisible(cuisine)) return { kind: 'inline', mount: cuisine };
+  return null;
+}
+
+function removeAllPanels() {
+  panel = null;
+  document.querySelectorAll(PANEL_ROOT_SELECTOR).forEach((el) => el.remove());
+}
+
+function ensurePanels() {
+  if (!document.querySelector(CARD_SELECTOR)) return;
+  const target = pickPanelTarget();
+
+  if (panel && (!panel.root.isConnected || !target || panel.kind !== target.kind || panel.mount !== target.mount)) {
+    panel = null;
+  }
+
+  document.querySelectorAll(PANEL_ROOT_SELECTOR).forEach((el) => {
+    if (!panel || el !== panel.root) el.remove();
+  });
+
+  if (!target || panel) return;
+
+  const root = document.createElement(target.kind === 'list' ? 'li' : 'div');
+  root.className = 'tbz-panel-root';
+  root.dataset.tbzPanel = target.kind;
+  const box = buildPanelBox();
+  if (target.kind === 'inline') box.classList.add('tbz-panel-inline');
+  root.appendChild(box);
+  if (target.kind === 'inline') {
+    target.mount.insertAdjacentElement('afterend', root);
+  } else {
+    target.mount.appendChild(root);
+  }
+  panel = { root, box, mount: target.mount, kind: target.kind };
+  syncPanel();
+}
+
+function syncPanel() {
+  if (!panel) return;
+  const s = state.settings;
+  panel.box.querySelector('.tbz-enabled').checked = s.enabled;
+  panel.box.querySelector('.tbz-fee-max').value = s.deliveryFeeMax !== null ? s.deliveryFeeMax : '';
+  panel.box.querySelector('.tbz-minorder').value = s.minOrderMax !== null ? s.minOrderMax : '';
   updateCounts();
 }
 
@@ -202,7 +227,7 @@ function parseNum(value) {
 function onSettingsChanged(changes) {
   if (changes.settings) {
     state.settings = TBZ.normalizeSettings(changes.settings.newValue);
-    syncPanels();
+    syncPanel();
     scheduleScan();
   }
 }
@@ -211,12 +236,14 @@ function start() {
   browser.storage.local.get('settings').then((stored) => {
     state.settings = TBZ.normalizeSettings(stored && stored.settings);
     ensurePanels();
-    syncPanels();
+    syncPanel();
     scheduleScan();
   });
 
   const observer = new MutationObserver(scheduleScan);
   observer.observe(document.body, { childList: true, subtree: true });
+
+  window.addEventListener('resize', scheduleScan);
 
   browser.storage.onChanged.addListener(onSettingsChanged);
 }
