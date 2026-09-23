@@ -115,24 +115,72 @@ function updateCounts() {
 function buildPanelBox() {
   const box = document.createElement('div');
   box.className = 'tbz-panel';
-  box.innerHTML = [
-    '<div class="tbz-panel-header">',
-    '  <strong class="tbz-title">BezorgFilters</strong>',
-    '  <span class="tbz-count"></span>',
-    '  <button type="button" class="tbz-toggle-btn" aria-pressed="false" title="In-/uitklappen">\u25bc</button>',
-    '</div>',
-    '<div class="tbz-panel-body">',
-    '  <label class="tbz-row"><input type="checkbox" class="tbz-enabled"> Filtering actief</label>',
-    '  <div class="tbz-row tbz-range">',
-    '    <span class="tbz-label">Bezorgkosten (\u20ac), max</span>',
-    '    <input type="number" class="tbz-fee-max" min="0" step="0.5" placeholder="0 = gratis">',
-    '  </div>',
-    '  <div class="tbz-row tbz-range">',
-    '    <span class="tbz-label">Min. bestelling (\u20ac), max</span>',
-    '    <input type="number" class="tbz-minorder" min="0" step="0.5" placeholder="max">',
-    '  </div>',
-    '</div>'
-  ].join('\n');
+
+  const header = document.createElement('div');
+  header.className = 'tbz-panel-header';
+
+  const title = document.createElement('strong');
+  title.className = 'tbz-title';
+  title.textContent = 'BezorgFilters';
+  header.appendChild(title);
+
+  const count = document.createElement('span');
+  count.className = 'tbz-count';
+  header.appendChild(count);
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'tbz-toggle-btn';
+  toggleBtn.setAttribute('aria-pressed', 'false');
+  toggleBtn.title = 'In-/uitklappen';
+  toggleBtn.textContent = '\u25bc';
+  header.appendChild(toggleBtn);
+
+  box.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'tbz-panel-body';
+
+  const enabledRow = document.createElement('label');
+  enabledRow.className = 'tbz-row';
+  const enabledInput = document.createElement('input');
+  enabledInput.type = 'checkbox';
+  enabledInput.className = 'tbz-enabled';
+  enabledRow.appendChild(enabledInput);
+  enabledRow.appendChild(document.createTextNode(' Filtering actief'));
+  body.appendChild(enabledRow);
+
+  const feeRow = document.createElement('div');
+  feeRow.className = 'tbz-row tbz-range';
+  const feeLabel = document.createElement('span');
+  feeLabel.className = 'tbz-label';
+  feeLabel.textContent = 'Bezorgkosten (\u20ac), max';
+  feeRow.appendChild(feeLabel);
+  const feeMax = document.createElement('input');
+  feeMax.type = 'number';
+  feeMax.className = 'tbz-fee-max';
+  feeMax.min = '0';
+  feeMax.step = '0.5';
+  feeMax.placeholder = '0 = gratis';
+  feeRow.appendChild(feeMax);
+  body.appendChild(feeRow);
+
+  const minOrderRow = document.createElement('div');
+  minOrderRow.className = 'tbz-row tbz-range';
+  const minOrderLabel = document.createElement('span');
+  minOrderLabel.className = 'tbz-label';
+  minOrderLabel.textContent = 'Min. bestelling (\u20ac), max';
+  minOrderRow.appendChild(minOrderLabel);
+  const minOrderMax = document.createElement('input');
+  minOrderMax.type = 'number';
+  minOrderMax.className = 'tbz-minorder';
+  minOrderMax.min = '0';
+  minOrderMax.step = '0.5';
+  minOrderMax.placeholder = 'max';
+  minOrderRow.appendChild(minOrderMax);
+  body.appendChild(minOrderRow);
+
+  box.appendChild(body);
 
   const set = (key, value) => {
     state.settings = Object.assign({}, state.settings, { [key]: value });
