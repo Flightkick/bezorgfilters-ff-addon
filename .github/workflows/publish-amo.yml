@@ -45,26 +45,9 @@ jobs:
           DISTANCE: ${{ steps.gitversion.outputs.versionSourceDistance }}
         run: |
           if [ -n "$VERSION_INPUT" ]; then
-            python3 -c "
-            import os, re, sys
-            version = os.environ['VERSION_INPUT'].strip()
-            if not re.fullmatch(r'\d+\.\d+\.\d+', version):
-                sys.exit(f'Invalid version: {version!r} (expected strict major.minor.patch, e.g. 0.2.0)')
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-                out.write(f'version={version}\n')
-            print('version (input):', version)
-            "
+            python3 -c "import os, re, sys; version = os.environ['VERSION_INPUT'].strip(); (lambda v: sys.exit(f'Invalid version: {v!r} (expected strict major.minor.patch, e.g. 0.2.0)') if not re.fullmatch(r'\d+\.\d+\.\d+', v) else None)(version); open(os.environ['GITHUB_OUTPUT'], 'a').write(f'version={version}\n'); print('version (input):', version)"
           else
-            python3 -c "
-            import os
-            mmp = os.environ['MAJOR_MINOR_PATCH'].strip()
-            distance = int(os.environ['DISTANCE'] or '0')
-            major, minor, patch = (int(part) for part in mmp.split('.'))
-            version = f'{major}.{minor}.{patch + distance}'
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-                out.write(f'version={version}\n')
-            print('version (GitVersion):', version)
-            "
+            python3 -c "import os; mmp = os.environ['MAJOR_MINOR_PATCH'].strip(); distance = int(os.environ['DISTANCE'] or '0'); major, minor, patch = (int(part) for part in mmp.split('.')); version = f'{major}.{minor}.{patch + distance}'; open(os.environ['GITHUB_OUTPUT'], 'a').write(f'version={version}\n'); print('version (GitVersion):', version)"
           fi
 
       - run: npm ci
