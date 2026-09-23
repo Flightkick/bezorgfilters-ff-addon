@@ -4,6 +4,10 @@ const CARD_SELECTOR = '[data-qa="restaurant-card"], [data-testid^="restaurant-it
 
 const FILTER_LIST_SELECTOR = 'search[data-qa="sidebar"] ul[data-qa="filter"]';
 
+const MOBILE_SHORTCUTS_SELECTOR = '[data-qa="filter-shortcuts-bar"]';
+
+const CUISINE_FILTER_SELECTOR = '[data-qa="cuisine-filter"]';
+
 const NAME_SELECTOR = '[data-qa="restaurant-info-name"], [data-testid="restaurant-name"], h2, h3';
 
 const FEE_SELECTOR = '[data-qa="restaurant-delivery-fee"], [data-testid*="delivery-fee"]';
@@ -61,7 +65,7 @@ const state = {
 };
 
 let pendingScan = null;
-let panelEl = null;
+let panels = [];
 
 function scheduleScan() {
   if (pendingScan) return;
@@ -72,14 +76,13 @@ function scheduleScan() {
 }
 
 function scan() {
-  if (panelEl && !panelEl.isConnected) {
-    panelEl = null;
+  panels = panels.filter((p) => p.box.isConnected);
+  if (!state.settings.showPanel) {
+    for (const p of panels) p.root.remove();
+    panels = [];
+  } else {
+    ensurePanels();
   }
-  if (panelEl && !state.settings.showPanel) {
-    panelEl.remove();
-    panelEl = null;
-  }
-  ensurePanel();
   const cards = Array.from(document.querySelectorAll(CARD_SELECTOR));
   applyFilters(cards);
 }
@@ -106,42 +109,33 @@ function applyFilters(cards) {
 }
 
 function updateCounts() {
-  if (!panelEl) return;
-  const el = panelEl.querySelector('#tbz-count');
-  if (!el) return;
-  el.textContent = state.counts.visible + ' van ' + state.counts.total;
+  for (const p of panels) {
+    const el = p.box.querySelector('.tbz-count');
+    if (el) el.textContent = state.counts.visible + ' van ' + state.counts.total;
+  }
 }
 
-function ensurePanel() {
-  if (panelEl || !state.settings.showPanel) return;
-  if (!document.querySelector(CARD_SELECTOR)) return;
-
-  const list = document.querySelector(FILTER_LIST_SELECTOR);
-  if (!list) return;
-  panelEl = document.createElement('li');
-  panelEl.id = 'tbz-panel';
+function buildPanelBox() {
   const box = document.createElement('div');
   box.className = 'tbz-panel';
   box.innerHTML = [
     '<div class="tbz-panel-header">',
     '  <strong class="tbz-title">BezorgFilters</strong>',
-    '  <span class="tbz-count" id="tbz-count"></span>',
-    '  <button type="button" class="tbz-toggle-btn" id="tbz-toggle" aria-pressed="false" title="In-/uitklappen">▼</button>',
+    '  <span class="tbz-count"></span>',
+    '  <button type="button" class="tbz-toggle-btn" aria-pressed="false" title="In-/uitklappen">\u25bc</button>',
     '</div>',
     '<div class="tbz-panel-body">',
-    '  <label class="tbz-row"><input type="checkbox" id="tbz-enabled"> Filtering actief</label>',
+    '  <label class="tbz-row"><input type="checkbox" class="tbz-enabled"> Filtering actief</label>',
     '  <div class="tbz-row tbz-range">',
-    '    <span class="tbz-label">Bezorgkosten (€), max</span>',
-    '    <input type="number" id="tbz-fee-max" min="0" step="0.5" placeholder="0 = gratis">',
+    '    <span class="tbz-label">Bezorgkosten (\u20ac), max</span>',
+    '    <input type="number" class="tbz-fee-max" min="0" step="0.5" placeholder="0 = gratis">',
     '  </div>',
     '  <div class="tbz-row tbz-range">',
-    '    <span class="tbz-label">Min. bestelling (€), max</span>',
-    '    <input type="number" id="tbz-minorder" min="0" step="0.5" placeholder="max">',
+    '    <span class="tbz-label">Min. bestelling (\u20ac), max</span>',
+    '    <input type="number" class="tbz-minorder" min="0" step="0.5" placeholder="max">',
     '  </div>',
     '</div>'
   ].join('\n');
-  panelEl.appendChild(box);
-  list.appendChild(panelEl);
 
   const set = (key, value) => {
     state.settings = Object.assign({}, state.settings, { [key]: value });
@@ -149,16 +143,55 @@ function ensurePanel() {
     scheduleScan();
   };
 
-  panelEl.querySelector('#tbz-enabled').addEventListener('change', (e) => set('enabled', e.target.checked));
-  panelEl.querySelector('#tbz-fee-max').addEventListener('change', (e) => set('deliveryFeeMax', parseNum(e.target.value)));
-  panelEl.querySelector('#tbz-minorder').addEventListener('change', (e) => set('minOrderMax', parseNum(e.target.value)));
+  box.querySelector('.tbz-enabled').addEventListener('change', (e) => set('enabled', e.target.checked));
+  box.querySelector('.tbz-fee-max').addEventListener('change', (e) => set('deliveryFeeMax', parseNum(e.target.value)));
+  box.querySelector('.tbz-minorder').addEventListener('change', (e) => set('minOrderMax', parseNum(e.target.value)));
 
-  box.querySelector('#tbz-toggle').addEventListener('click', () => {
+  box.querySelector('.tbz-toggle-btn').addEventListener('click', () => {
     const collapsed = box.classList.toggle('tbz-collapsed');
-    box.querySelector('#tbz-toggle').setAttribute('aria-pressed', String(!collapsed));
+    box.querySelector('.tbz-toggle-btn').setAttribute('aria-pressed', String(!collapsed));
   });
 
-  syncPanel();
+  return box;
+}
+
+function ensurePanels() {
+  if (!document.querySelector(CARD_SELECTOR)) return;
+
+  const targets = [];
+  for (const list of document.querySelectorAll(FILTER_LIST_SELECTOR)) {
+    targets.push({ kind: 'list', mount: list });
+  }
+  if (document.querySelector(MOBILE_SHORTCUTS_SELECTOR)) {
+    const cuisine = document.querySelector(CUISINE_FILTER_SELECTOR);
+    if (cuisine) targets.push({ kind: 'inline', mount: cuisine });
+  }
+
+  for (const t of targets) {
+    if (panels.some((p) => p.mount === t.mount)) continue;
+    const root = document.createElement(t.kind === 'list' ? 'li' : 'div');
+    root.className = 'tbz-panel-root';
+    root.dataset.tbzPanel = t.kind;
+    const box = buildPanelBox();
+    if (t.kind === 'inline') box.classList.add('tbz-panel-inline');
+    root.appendChild(box);
+    if (t.kind === 'inline') {
+      t.mount.insertAdjacentElement('afterend', root);
+    } else {
+      t.mount.appendChild(root);
+    }
+    panels.push({ root, box, mount: t.mount, kind: t.kind });
+  }
+}
+
+function syncPanels() {
+  const s = state.settings;
+  for (const p of panels) {
+    p.box.querySelector('.tbz-enabled').checked = s.enabled;
+    p.box.querySelector('.tbz-fee-max').value = s.deliveryFeeMax !== null ? s.deliveryFeeMax : '';
+    p.box.querySelector('.tbz-minorder').value = s.minOrderMax !== null ? s.minOrderMax : '';
+  }
+  updateCounts();
 }
 
 function parseNum(value) {
@@ -166,19 +199,10 @@ function parseNum(value) {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-function syncPanel() {
-  if (!panelEl) return;
-  const s = state.settings;
-  panelEl.querySelector('#tbz-enabled').checked = s.enabled;
-  panelEl.querySelector('#tbz-fee-max').value = s.deliveryFeeMax !== null ? s.deliveryFeeMax : '';
-  panelEl.querySelector('#tbz-minorder').value = s.minOrderMax !== null ? s.minOrderMax : '';
-  updateCounts();
-}
-
 function onSettingsChanged(changes) {
   if (changes.settings) {
     state.settings = TBZ.normalizeSettings(changes.settings.newValue);
-    syncPanel();
+    syncPanels();
     scheduleScan();
   }
 }
@@ -186,8 +210,8 @@ function onSettingsChanged(changes) {
 function start() {
   browser.storage.local.get('settings').then((stored) => {
     state.settings = TBZ.normalizeSettings(stored && stored.settings);
-    ensurePanel();
-    syncPanel();
+    ensurePanels();
+    syncPanels();
     scheduleScan();
   });
 
