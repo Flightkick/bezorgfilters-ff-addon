@@ -1,0 +1,58 @@
+name: Tag version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4.7.0
+        with:
+          versionSpec: 6.x
+
+      - name: GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4.7.0
+
+      - name: Compose version
+        id: version
+        env:
+          MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
+          DISTANCE: ${{ steps.gitversion.outputs.versionSourceDistance }}
+        run: |
+          python3 -c "
+          import os
+          mmp = os.environ['MAJOR_MINOR_PATCH'].strip()
+          distance = int(os.environ['DISTANCE'] or '0')
+          major, minor, patch = (int(part) for part in mmp.split('.'))
+          version = f'{major}.{minor}.{patch + distance}'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'version={version}\n')
+          print('version:', version)
+          "
+
+      - name: Tag merge commit
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            if [ "$(git rev-parse "v$VERSION")" = "$(git rev-parse "$GITHUB_SHA")" ]; then
+              echo "Tag v$VERSION already points at this commit; nothing to do."
+              exit 0
+            fi
+            echo "::error::Tag v$VERSION already exists on $(git rev-parse "v$VERSION"); refusing to overwrite."
+            exit 1
+          fi
+          git tag "v$VERSION" "$GITHUB_SHA"
+          git push origin "v$VERSION"
