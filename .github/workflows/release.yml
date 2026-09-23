@@ -73,7 +73,7 @@ jobs:
           mkdir -p dist
           zip -r dist/bezorgfilters-${VERSION}.zip . \
             -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
-               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'LICENSE'
+               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'LICENSE' 'docs/*'
 
       - name: Sign with AMO
         env:

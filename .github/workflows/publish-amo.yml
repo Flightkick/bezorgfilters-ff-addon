@@ -77,7 +77,7 @@ jobs:
           mkdir -p dist
           zip -r dist/bezorgfilters-${VERSION}.zip . \
             -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
-               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'LICENSE'
+               '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json' 'LICENSE' 'docs/*'
 
       - name: Lint packaged add-on (AMO validator)
         env:
@@ -95,11 +95,16 @@ jobs:
           import json, os
           with open('sign-src/manifest.json') as f:
               manifest = json.load(f)
+          with open('docs/amo-description.md') as f:
+              description = f.read().strip()
           notes = os.environ.get('APPROVAL_NOTES', '').strip()
           metadata = {
               'default_locale': 'en-US',
               'name': {'en-US': manifest['name']},
               'summary': {'en-US': manifest['description']},
+              'description': {'en-US': description},
+              'homepage': {'en-US': manifest.get('homepage_url')},
+              'support_url': {'en-US': manifest.get('homepage_url') + '/issues'},
               'categories': {
                   'firefox': ['shopping'],
                   'android': ['shopping'],
