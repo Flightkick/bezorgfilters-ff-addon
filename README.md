@@ -60,6 +60,11 @@ test/                  Node tests (jsdom integration + unit)
 
 ## Development
 
+The manifest declares `browser_specific_settings.gecko_android`, so AMO
+lists the add-on as compatible with both Firefox (desktop) and Firefox for
+Android (both from 142.0). Without that key, AMO marks a version as
+desktop-only regardless of any listing toggle.
+
 No build step and no runtime dependencies. Load the add-on directly:
 
 1. Open Firefox and go to `about:debugging#/runtime/this-firefox`
