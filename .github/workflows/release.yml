@@ -25,6 +25,18 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.7.0
 
+      - name: Compose version
+        id: version
+        env:
+          MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
+          DISTANCE: ${{ steps.gitversion.outputs.versionSourceDistance }}
+        run: |
+          if [ "$DISTANCE" = "0" ]; then
+            echo "version=$MAJOR_MINOR_PATCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$MAJOR_MINOR_PATCH.$DISTANCE" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -33,11 +45,11 @@ jobs:
 
       - name: Patch manifest version
         env:
-          VERSION: ${{ steps.gitversion.outputs.semVer }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           python3 -c "
           import json, os
-          version = os.environ['VERSION'].split('-')[0].split('+')[0]
+          version = os.environ['VERSION']
           with open('manifest.json') as f:
               manifest = json.load(f)
           manifest['version'] = version
@@ -52,7 +64,7 @@ jobs:
       - name: Build unsigned zip
         run: |
           mkdir -p dist
-          zip -r dist/bezorgfilters-${{ steps.gitversion.outputs.semVer }}.zip . \
+          zip -r dist/bezorgfilters-${{ steps.version.outputs.version }}.zip . \
             -x 'dist/*' 'test/*' 'tools/*' 'node_modules/*' '.git/*' '.gitignore' \
                '.github/*' '*.zip' 'README.md' 'package.json' 'package-lock.json'
 
@@ -62,7 +74,7 @@ jobs:
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
           rm -rf sign-src && mkdir sign-src
-          unzip -q dist/bezorgfilters-${{ steps.gitversion.outputs.semVer }}.zip -d sign-src
+          unzip -q dist/bezorgfilters-${{ steps.version.outputs.version }}.zip -d sign-src
           npx --yes web-ext sign \
             --source-dir sign-src \
             --channel unlisted \
@@ -71,7 +83,7 @@ jobs:
       - name: Attach xpi to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.gitversion.outputs.semVer }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           XPI=$(ls dist/*.xpi | head -n1)
           if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
