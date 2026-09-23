@@ -1,5 +1,7 @@
 # BezorgFilters (Firefox add-on)
 
+Licensed under the [MIT License](./LICENSE).
+
 A Firefox add-on that adds price-based filters to
 [thuisbezorgd.nl](https://www.thuisbezorgd.nl) that the site itself does not offer:
 
@@ -135,8 +137,9 @@ Choosing between the two lanes:
   When both lanes would derive the same version, pass an explicit `version`
   to one of them.
 - **First listed submission only:** before the store listing exists, the AMO
-  metadata (name, summary, description, category, license, screenshots) must
-  be created once by hand in the AMO developer dashboard. Subsequent
+  metadata (name, summary, description, category, screenshots) must
+  be created once by hand in the AMO developer dashboard — the license
+  (MIT) is passed automatically with every listed submission. Subsequent
   submissions update the existing listing automatically.
 - After a listed submission the version is *pending review* in the AMO
   dashboard; once approved, AMO hosts and distributes the add-on and no
