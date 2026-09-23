@@ -23,9 +23,21 @@
   }
 }
 
-#tbz-panel {
+.tbz-panel-root {
   list-style: none;
   margin: 12px 0 4px;
+}
+
+.tbz-panel-inline {
+  margin: 0 0 12px;
+}
+
+.tbz-panel-inline .tbz-panel {
+  border-radius: 12px;
+}
+
+.tbz-panel-inline .tbz-panel-body {
+  padding: 12px;
 }
 
 .tbz-panel {

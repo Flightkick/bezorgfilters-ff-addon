@@ -29,7 +29,7 @@ injectScript(fs.readFileSync(path.join(root, 'lib/filters.js'), 'utf8'));
 injectScript(
   fs.readFileSync(path.join(root, 'content.js'), 'utf8').replace(
     /\nstart\(\);\s*$/,
-    '\nwindow.__tbzTestBridge.tbz = { applyFilters, extractCardData, ensurePanel, scan, state };'
+    '\nwindow.__tbzTestBridge.tbz = { applyFilters, extractCardData, ensurePanels, scan, state, panels: () => panels };'
   )
 );
 
@@ -137,29 +137,50 @@ function run() {
   assert.deepStrictEqual(minDimmed, ['Papito', 'Fat Phills Leiden', "Meryem's"], 'min order > 20 dimmed');
 
   tbz.state.settings = TBZ.normalizeSettings({ showPanel: true });
-  const filterList = document.querySelector('ul[data-qa="filter"]');
-  tbz.ensurePanel();
-  const panelV1 = document.getElementById('tbz-panel');
-  assert.ok(panelV1, 'panel created');
-  assert.strictEqual(panelV1.tagName, 'LI', 'panel rendered as a sidebar list item');
-  assert.ok(filterList.contains(panelV1), 'panel inside the sidebar filter list');
-  panelV1.remove();
-  assert.strictEqual(document.getElementById('tbz-panel'), null, 'site wiped the panel');
+  const filterList = document.querySelector('search[data-qa="sidebar"] ul[data-qa="filter"]');
+  const cuisine = document.querySelector('[data-qa="cuisine-filter"]');
+  tbz.ensurePanels();
+  assert.strictEqual(tbz.panels().length, 2, 'sidebar panel + inline mobile panel created');
+  const listPanel = document.querySelector('li[data-tbz-panel="list"]');
+  const inlinePanel = document.querySelector('div[data-tbz-panel="inline"]');
+  assert.ok(listPanel, 'sidebar panel created');
+  assert.strictEqual(listPanel.tagName, 'LI', 'sidebar panel rendered as a list item');
+  assert.ok(filterList.contains(listPanel), 'sidebar panel inside the filter list');
+  assert.ok(inlinePanel, 'inline mobile panel created');
+  assert.strictEqual(inlinePanel.tagName, 'DIV', 'inline panel rendered as a div');
+  assert.strictEqual(cuisine.nextElementSibling, inlinePanel, 'inline panel directly below the cuisine row');
+
+  assert.strictEqual(document.querySelectorAll('.tbz-panel .tbz-fee-max').length, 2, 'no duplicate element ids across panels');
+  assert.ok(!document.querySelector('[id^="tbz-"][id$="-fee-max"]'), 'internal ids replaced by classes');
+
+  listPanel.remove();
   tbz.scan();
-  const panelV2 = document.getElementById('tbz-panel');
-  assert.ok(panelV2, 'panel recreated after being removed');
-  assert.notStrictEqual(panelV2, panelV1, 'fresh panel instance');
-  assert.strictEqual(panelV2.querySelector('#tbz-fee-max').value, '', 'recreated panel synced from settings');
+  const listPanelV2 = document.querySelector('li[data-tbz-panel="list"]');
+  assert.ok(listPanelV2 && listPanelV2 !== listPanel, 'sidebar panel recreated after being wiped');
+  assert.ok(filterList.contains(listPanelV2), 'recreated sidebar panel back in the filter list');
+  assert.strictEqual(listPanelV2.querySelector('.tbz-fee-max').value, '', 'recreated panel synced from settings');
+
+  const modalSheet = document.createElement('div');
+  modalSheet.innerHTML = '<search data-qa="sidebar"><ul role="list" data-qa="filter"></ul></search>';
+  document.body.appendChild(modalSheet);
+  tbz.scan();
+  assert.strictEqual(tbz.panels().length, 3, 'panel injected into the mobile filter modal when it opens');
+  assert.ok(modalSheet.querySelector('li[data-tbz-panel="list"]'), 'modal panel present');
+  modalSheet.remove();
+  tbz.scan();
+  assert.strictEqual(tbz.panels().length, 2, 'detached modal panel dropped from tracking');
 
   tbz.state.settings = TBZ.normalizeSettings({ showPanel: false });
   tbz.scan();
-  assert.strictEqual(document.getElementById('tbz-panel'), null, 'panel removed live when showPanel is off');
+  assert.strictEqual(tbz.panels().length, 0, 'all panels removed live when showPanel is off');
+  assert.strictEqual(document.querySelector('li[data-tbz-panel="list"]'), null, 'sidebar panel gone');
+  assert.strictEqual(document.querySelector('div[data-tbz-panel="inline"]'), null, 'inline panel gone');
 
   tbz.state.settings = TBZ.normalizeSettings({ showPanel: true });
   tbz.scan();
-  const panelV3 = document.getElementById('tbz-panel');
-  assert.ok(panelV3, 'panel re-created live when showPanel is on again');
-  assert.ok(filterList.contains(panelV3), 're-created panel back in the sidebar filter list');
+  assert.strictEqual(tbz.panels().length, 2, 'panels re-created live when showPanel is on again');
+  assert.ok(filterList.contains(document.querySelector('li[data-tbz-panel="list"]')), 'sidebar panel back');
+  assert.strictEqual(cuisine.nextElementSibling, document.querySelector('div[data-tbz-panel="inline"]'), 'inline panel back');
 
   console.log('DOM integration tests passed.');
 }

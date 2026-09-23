@@ -21,9 +21,11 @@ or endorsed by any such platform.
   `MutationObserver` (the list is rendered client-side and updates as you scroll/filter),
   extracts each restaurant card's delivery fee and minimum order amount, and dims
   non-matching cards.
-- A collapsible filter panel is injected as a new section inside the site's own filter
-  sidebar (`ul[data-qa="filter"]`) for quick access, styled distinctly so it is clearly
-  from the extension.
+- Collapsible filter panels are injected as new sections for quick access, styled
+  distinctly so they are clearly from the extension:
+  - Desktop: inside the site's filter sidebar (`ul[data-qa="filter"]`).
+  - Mobile: directly below the cuisine row (always visible, no clicks needed) and
+    inside the filters sheet that opens from the filter button in the shortcuts bar.
 - A toolbar popup offers the same settings and works on any page.
 - Settings are stored via `browser.storage.local` and stay in sync between the panel
   and the popup.
